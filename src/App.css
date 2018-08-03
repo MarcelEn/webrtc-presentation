@@ -24,11 +24,34 @@
     margin-bottom: 10px;
 }
 
-.senderMe{
+.senderMe {
     background: lightgreen;
     float: right;
 }
 
-.senderYou{
+.senderYou {
     background: white;
+}
+
+.videoWrapper {
+    position: relative;
+}
+
+video {
+    position: absolute;
+    border-radius: 5px;
+    background: black;
+}
+
+#remoteStream {
+    width: 100%;
+    top: 0px;
+    left: 0px;
+}
+
+#localStream {
+    width: 25%;
+    top: 20px;
+    left: 20px;
+    box-shadow: 1px 1px 10px black;
 }

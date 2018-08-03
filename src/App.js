@@ -2,6 +2,11 @@ import React, { Component } from 'react';
 import { Button, Grid, Row, Col, PageHeader, FormControl } from 'react-bootstrap';
 import "./App.css";
 
+const videoConstraints = {
+    audio: true,
+    video: { width: 1280, height: 720 }
+}
+
 class App extends Component {
     constructor(props) {
         super(props);
@@ -13,14 +18,16 @@ class App extends Component {
             remoteDescriptionIsSet: false,
             receiveChatChannel: false,
             sendChatChannel: false,
+            videoChatIsStarted: false,
             chatInput: "",
-            messages: []
+            messages: [],
+            localVideoStream: null
         }
 
         this.rtc = new RTCPeerConnection();
         this.rtc.ondatachannel = this.onDataChannel.bind(this)
         this.rtc.onicecandidate = this.onicecandidate.bind(this)
-
+        this.rtc.onaddstream = console.log
 
         this.onUserInput = this.onUserInput.bind(this);
         this.createLocalDescription = this.createLocalDescription.bind(this);
@@ -30,8 +37,16 @@ class App extends Component {
     }
 
     onicecandidate(e) {
-        if (e.currentTarget.localDescription === "answer" && e.candidate)
-            this.rtc.addIceCandidate(e.candidate)
+        console.log(e)
+        switch (e.type) {
+            case "icecandidate":
+                if (e.currentTarget.localDescription === "answer" && e.candidate)
+                    this.rtc.addIceCandidate(e.candidate)
+                break;
+            case "addstream":
+                this.applyStream("remoteStream", e.stream);
+                break;
+        }
     }
 
     onDataChannel(e) {
@@ -45,39 +60,52 @@ class App extends Component {
     }
 
     createLocalDescription() {
-        this.sendChatChannel = this.rtc.createDataChannel("callerChannel");
+        this.sendChatChannel = this.rtc.createDataChannel("callerChatChannel");
         this.sendChatChannel.onopen = () => { this.setState({ sendChatChannel: true }) };
-
-        this.rtc.createOffer()
-            .then(offer => {
-                this.rtc.setLocalDescription(offer);
-                this.setState({
-                    localDescriptionIsSet: true,
-                    localDescription: JSON.stringify(this.rtc.localDescription)
-                });
-            })
-    }
-
-    setRemoteDescription() {
-        this.sendChatChannel = this.rtc.createDataChannel("calleeChannel");
-        this.sendChatChannel.onopen = () => { this.setState({ sendChatChannel: true }) };
-
-        this.rtc.setRemoteDescription(JSON.parse(this.state.remoteDescription))
-            .then(() => {
-                this.setState({
-                    remoteDescriptionIsSet: true,
-                    remoteDescription: JSON.stringify(this.rtc.remoteDescription)
-                })
-                if (!this.state.localDescriptionIsSet)
-                    this.rtc.createAnswer()
-                        .then(answer => this.rtc.setLocalDescription(answer))
-                        .then(() => {
+        navigator.mediaDevices.getUserMedia(videoConstraints)
+            .then(
+                stream => {
+                    this.applyStream("localStream", stream)
+                    stream.getTracks().forEach(track => this.rtc.addTrack(track, stream));
+                    this.rtc.createOffer()
+                        .then(offer => {
+                            this.rtc.setLocalDescription(offer);
                             this.setState({
                                 localDescriptionIsSet: true,
                                 localDescription: JSON.stringify(this.rtc.localDescription)
                             });
                         })
-            })
+                }
+            )
+
+    }
+
+    setRemoteDescription() {
+        this.sendChatChannel = this.rtc.createDataChannel("calleeChatChannel");
+        this.sendChatChannel.onopen = () => { this.setState({ sendChatChannel: true }) };
+        navigator.mediaDevices.getUserMedia(videoConstraints)
+            .then(
+                stream => {
+                    this.applyStream("localStream", stream)
+                    stream.getTracks().forEach(track => this.rtc.addTrack(track, stream));
+                    this.rtc.setRemoteDescription(JSON.parse(this.state.remoteDescription))
+                        .then(() => {
+                            this.setState({
+                                remoteDescriptionIsSet: true,
+                                remoteDescription: JSON.stringify(this.rtc.remoteDescription)
+                            })
+                            if (!this.state.localDescriptionIsSet)
+                                this.rtc.createAnswer()
+                                    .then(answer => this.rtc.setLocalDescription(answer))
+                                    .then(() => {
+                                        this.setState({
+                                            localDescriptionIsSet: true,
+                                            localDescription: JSON.stringify(this.rtc.localDescription)
+                                        });
+                                    })
+                        })
+                }
+            )
     }
 
     sendMessage() {
@@ -98,6 +126,13 @@ class App extends Component {
         })
     }
 
+    applyStream(id, stream) {
+        var video = document.getElementById(id);
+        video.srcObject = stream;
+        video.onloadedmetadata = function (e) {
+            video.play();
+        };
+    }
     render() {
         return (
             <Grid>
@@ -196,8 +231,40 @@ class App extends Component {
                                 </Col>
                             </Row>
                         </div>
-                        : ""
+                        :
+                        <Row>
+                            <Col md={12}>
+                                <h3>
+                                    Chat
+                                </h3>
+                            </Col>
+                        </Row>
                 }
+                <div>
+                    <hr />
+                    <Row>
+                        <Col md={12}>
+                            <h3>
+                                Video Chat
+                                    </h3>
+                            <div className="videoWrapper">
+                                <video id="remoteStream" />
+                                <video id="localStream" />
+                            </div>
+                        </Col>
+                    </Row>
+                </div>
+                {/* {
+                    this.state.localDescriptionIsSet && this.state.remoteDescriptionIsSet ?
+                        :
+                        <Row>
+                            <Col md={12}>
+                                <h3>
+                                    Video Chat
+                                </h3>
+                            </Col>
+                        </Row>
+                } */}
             </Grid>
         );
     }
