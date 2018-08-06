@@ -27,7 +27,9 @@ class App extends Component {
         this.rtc = new RTCPeerConnection();
         this.rtc.ondatachannel = this.onDataChannel.bind(this)
         this.rtc.onicecandidate = this.onicecandidate.bind(this)
-        this.rtc.onaddstream = console.log
+        this.rtc.onaddstream = this.onAddStream.bind(this)
+
+        //this.rtc.onnegotiationneeded = console.log;
 
         this.onUserInput = this.onUserInput.bind(this);
         this.createLocalDescription = this.createLocalDescription.bind(this);
@@ -36,8 +38,11 @@ class App extends Component {
         this.addMessage = this.addMessage.bind(this);
     }
 
+    onAddStream(event) {
+        this.applyStream("remoteStream", event.stream)
+    }
+
     onicecandidate(e) {
-        console.log(e)
         switch (e.type) {
             case "icecandidate":
                 if (e.currentTarget.localDescription === "answer" && e.candidate)
@@ -186,67 +191,56 @@ class App extends Component {
                     />
                 </Row>
                 <hr />
-                {
-                    this.state.receiveChatChannel && this.state.sendChatChannel ?
-                        <div>
-                            <Row>
-                                <Col md={12}>
-                                    <h3>
-                                        Chat
-                                        </h3>
-                                    <div className="chatWrapper">
-                                        {
-                                            this.state.messages.map(
-                                                (message, i) =>
-                                                    <Row key={`chatMessage-${i}`}>
-                                                        <Col md={12}>
-                                                            <div className={message.me ? "senderMe" : "senderYou"}>
-                                                                {message.content}
-                                                            </div>
-                                                        </Col>
-                                                    </Row>
-                                            )
-                                        }
-                                    </div>
-                                </Col>
-                            </Row>
-                            <Row>
-                                <Col md={10}>
-                                    <FormControl
-                                        type="text"
-                                        name="chatInput"
-                                        value={this.state.chatInput}
-                                        placeholder="Enter a message"
-                                        onChange={this.onUserInput}
-                                    />
-                                </Col>
-                                <Col md={2}>
-                                    <Button
-                                        bsStyle="primary"
-                                        disabled={this.state.chatInput === ""}
-                                        onClick={this.sendMessage}
-                                    >
-                                        SEND
-                                    </Button>
-                                </Col>
-                            </Row>
-                        </div>
-                        :
-                        <Row>
-                            <Col md={12}>
-                                <h3>
-                                    Chat
-                                </h3>
-                            </Col>
-                        </Row>
-                }
+                <div>
+                    <Row>
+                        <Col md={12}>
+                            <h3>
+                                Chat
+                            </h3>
+                            <div className="chatWrapper">
+                                {
+                                    this.state.messages.map(
+                                        (message, i) =>
+                                            <Row key={`chatMessage-${i}`}>
+                                                <Col md={12}>
+                                                    <div className={message.me ? "senderMe" : "senderYou"}>
+                                                        {message.content}
+                                                    </div>
+                                                </Col>
+                                            </Row>
+                                    )
+                                }
+                            </div>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col md={10}>
+                            <FormControl
+                                type="text"
+                                name="chatInput"
+                                value={this.state.chatInput}
+                                placeholder="Enter a message"
+                                onChange={this.onUserInput}
+                            />
+                        </Col>
+                        <Col md={2}>
+                            <Button
+                                bsStyle="primary"
+                                disabled={this.state.chatInput === "" || !this.state.receiveChatChannel && !this.state.sendChatChannel}
+                                onClick={this.sendMessage}
+                            >
+                                SEND
+                            </Button>
+                        </Col>
+                    </Row>
+                </div>
                 <div>
                     <hr />
                     <Row>
                         <Col md={12}>
                             <h3>
                                 Video Chat
-                                    </h3>
+                            </h3>
                             <div className="videoWrapper">
                                 <video id="remoteStream" />
                                 <video id="localStream" />
@@ -254,17 +248,6 @@ class App extends Component {
                         </Col>
                     </Row>
                 </div>
-                {/* {
-                    this.state.localDescriptionIsSet && this.state.remoteDescriptionIsSet ?
-                        :
-                        <Row>
-                            <Col md={12}>
-                                <h3>
-                                    Video Chat
-                                </h3>
-                            </Col>
-                        </Row>
-                } */}
             </Grid>
         );
     }
