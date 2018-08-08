@@ -26,17 +26,24 @@ class App extends Component {
         }
 
         this.rtc = new RTCPeerConnection({
-            iceServers: [
-                {
-                    'urls': 'stun:stun.l.google.com:19302'
-                }
-            ]
+            "iceServers": [{
+                "urls": [
+                    "stun:e3.xirsys.com",
+                    "turn:e3.xirsys.com:80?transport=udp",
+                    "turn:e3.xirsys.com:3478?transport=udp",
+                    "turn:e3.xirsys.com:80?transport=tcp",
+                    "turn:e3.xirsys.com:3478?transport=tcp",
+                    "turns:e3.xirsys.com:443?transport=tcp",
+                    "turns:e3.xirsys.com:5349?transport=tcp"
+                ],
+                "username": "965a1ebc-9a1e-11e8-ae45-7c6bf96a65ff",
+                "credential": "965a1fe8-9a1e-11e8-9c0b-6e07bffa0e91"
+            }]
         });
         this.rtc.ondatachannel = this.onDataChannel.bind(this)
         this.rtc.onicecandidate = this.onicecandidate.bind(this)
         this.rtc.onaddstream = this.onAddStream.bind(this)
         this.rtc.onnegotiationneeded = this.onNegotiationNeeded.bind(this);
-
 
         this.onUserInput = this.onUserInput.bind(this);
         this.createLocalDescription = this.createLocalDescription.bind(this);
@@ -49,7 +56,7 @@ class App extends Component {
         this.createAnswer = this.createAnswer.bind(this);
     }
 
-    onNegotiationNeeded(event) {
+    onNegotiationNeeded() {
         if (!this.isCaller())
             return;
 
@@ -73,14 +80,12 @@ class App extends Component {
                     this.rtc.addIceCandidate(e.candidate)
                 break;
             case "addstream":
-                console.log(e)
                 this.applyStream("remoteStream", e.stream);
                 break;
         }
     }
 
     onDataChannel(e) {
-        console.log(e)
         this.receiveChatChannel = e.channel;
         this.receiveChatChannel.onopen = () => { this.setState({ receiveChatChannel: true }) };
         this.receiveChatChannel.onmessage = message => { this.addMessage({ me: false, content: message.data }) }
@@ -148,7 +153,7 @@ class App extends Component {
 
     applyStream(id, stream) {
         var video = document.getElementById(id);
-        if(id === "localStream"){
+        if (id === "localStream") {
             video.volume = 0;
         }
         video.srcObject = stream;

@@ -1,0 +1,19 @@
+email: webrtc@gmx.net
+pw: passw0rd
+
+numb.viagenie.ca:
+pw: 8F0E2F76E22B43E2855189877E7DC1E1E7D98C226C95DB247CD1D547928334A9
+
+"iceServers": [{
+    "urls": [
+        "stun:e3.xirsys.com",
+        "turn:e3.xirsys.com:80?transport=udp",
+        "turn:e3.xirsys.com:3478?transport=udp",
+        "turn:e3.xirsys.com:80?transport=tcp",
+        "turn:e3.xirsys.com:3478?transport=tcp",
+        "turns:e3.xirsys.com:443?transport=tcp",
+        "turns:e3.xirsys.com:5349?transport=tcp"
+    ],
+    "username": "965a1ebc-9a1e-11e8-ae45-7c6bf96a65ff",
+    "credential": "965a1fe8-9a1e-11e8-9c0b-6e07bffa0e91"
+}]
